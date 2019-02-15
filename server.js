@@ -46,18 +46,23 @@ var find_and_fetch_price = (msg, match) => {
         }
       }
 
-      let grouped_cards = cards.groupBy("name")
-      let message = ""
+      if (cards.length > 0) {
+        let grouped_cards = cards.groupBy("name")
+        let message = ""
 
-      for (const card_name of Object.keys(grouped_cards)) {
+        for (const card_name of Object.keys(grouped_cards)) {
           message += `*${card_name.trim()}*\n`
           message += grouped_cards[card_name].reduce((acc, current) => {
-            return `${acc}${current["set"]}: ${current["value"]} -> * ${current["converted_value"]}*\n`;
+            return `${acc}${current["set"]}: ${current["value"]} → * ${current["converted_value"]}*\n`;
           }, "")
           message += "\n"
+        }
+
+        bot.sendMessage(chatId, message, {parse_mode : "markdown"});
+      } else {
+        bot.sendMessage(chatId, `Não foram encontrados resultados para "${cardName}"`, {parse_mode : "markdown"});
       }
 
-      bot.sendMessage(chatId, message, {parse_mode : "markdown"});
     })
     .catch(function(err){
       console.log(err);
