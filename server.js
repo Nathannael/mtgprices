@@ -14,10 +14,6 @@ Array.prototype.groupBy = function(prop) {
   }, {})
 }
 
-var fetch_table_data = (td_class) => {
-  return (x) => { return x.attribs !== undefined && x.attribs.class.includes(td_class) }
-}
-
 var convert_price = (price, rate=2.5) => {
   return (parseFloat(price)*rate).toFixed(2)
 }
@@ -30,6 +26,16 @@ var get_price_from_table_data = (td_content) => {
     td_content = td_content.children[2];
   }
   return parseFloat(td_content.children[0].data.substring(1)).toFixed(2);
+}
+
+var fetch_table_data = (td_class) => {
+  return (x) => { return x.attribs !== undefined && x.attribs.class.includes(td_class) }
+}
+
+var table_row_contains_card_with_mint_condition = (table_row) => {
+  return table_row.children.filter(
+    fetch_table_data('search_results_7')
+  )[0].children[0].children[0].data == "NM/M"
 }
 
 var append_card_info_onto_message_string = (message_string, card_info) => {
@@ -81,13 +87,8 @@ var find_and_fetch_price = (msg, match) => {
       let table_rows = $('.deckdbbody_row,.deckdbbody2_row', html);
 
       for(let i = 0; i < table_rows.length; i++) {
-        // Checks wether that row happens to have a column with condition equal to NM/M
-        if (table_rows[i].children.filter(fetch_table_data('search_results_7')
-          )[0].children[0].children[0].data == "NM/M") {
-
-          let card = get_card_from_table_row(table_rows[i]);
-          cards.push(card);
-
+        if (table_row_contains_card_with_mint_condition(table_rows[i])) {
+          cards.push(get_card_from_table_row(table_rows[i]));
         }
       }
 
