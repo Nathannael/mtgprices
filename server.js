@@ -32,6 +32,20 @@ var get_price_from_table_data = (td_content) => {
   return parseFloat(td_content.children[0].data.substring(1)).toFixed(2);
 }
 
+var append_card_info_onto_message_string = (message_string, card_info) => {
+  return `${message_string}${card_info["set"]}: ${card_info["price"]} → * ${card_info["converted_price"]}*\n`;
+}
+
+var assemble_message_from_grouped_cards = (grouped_cards) => {
+  let message = ""
+  for (const card_name of Object.keys(grouped_cards)) {
+    message += `*${card_name.trim()}*\n`
+    message += grouped_cards[card_name].reduce(append_card_info_onto_message_string, "")
+    message += "\n"
+  }
+  return message
+}
+
 var find_and_fetch_price = (msg, match) => {
   const chatId = msg.chat.id;
   const cardName = match[1];
@@ -44,9 +58,9 @@ var find_and_fetch_price = (msg, match) => {
       let table_rows = $('.deckdbbody_row,.deckdbbody2_row', html);
 
       for(let i = 0; i < table_rows.length; i++) {
-        if (table_rows[i].children.filter(
-          fetch_table_data('search_results_7') // Card condition is in this column
-        )[0].children[0].children[0].data == "NM/M") {
+        // Checks wether that row happens to have a column with condition equal to NM/M
+        if (table_rows[i].children.filter(fetch_table_data('search_results_7')
+          )[0].children[0].children[0].data == "NM/M") {
 
           let td_name = table_rows[i].children.filter(fetch_table_data('search_results_1'))[0]; // Card name is in this column
           let td_set = table_rows[i].children.filter(fetch_table_data('search_results_2'))[0]; // Card set is in this column
@@ -72,16 +86,7 @@ var find_and_fetch_price = (msg, match) => {
 
       if (cards.length > 0) {
         let grouped_cards = cards.groupBy("name")
-        let message = ""
-
-        for (const card_name of Object.keys(grouped_cards)) {
-          message += `*${card_name.trim()}*\n`
-          message += grouped_cards[card_name].reduce(
-            (full_string, current_card) => {
-              return `${full_string}${current_card["set"]}: ${current_card["price"]} → * ${current_card["converted_price"]}*\n`;
-            }, "")
-          message += "\n"
-        }
+        let message = assemble_message_from_grouped_cards(grouped_cards)
 
         bot.sendMessage(chatId, message, {parse_mode : "markdown"});
       } else {
