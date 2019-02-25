@@ -46,14 +46,37 @@ var assemble_message_from_grouped_cards = (grouped_cards) => {
   return message
 }
 
+var get_card_from_table_row = (table_row) => {
+  let td_name = table_row.children.filter(fetch_table_data('search_results_1'))[0]; // Card name is in this column
+  let td_set = table_row.children.filter(fetch_table_data('search_results_2'))[0]; // Card set is in this column
+  let td_price = table_row.children.filter(fetch_table_data('search_results_9'))[0]; // Card price is in this column
+
+  // Each td has a tree of HTML until we get to the info that we think is important.
+  // That's why we go through a bunch of children
+  let scg_link = td_name.children[0].children[0].attribs["href"];
+  let name = td_name.children[0].children[0].children[0].data;
+  let set = td_set.children[1].children[0].data;
+  let price = get_price_from_table_data(td_price);
+
+  return {
+    scg_link: scg_link,
+    name: name,
+    set: set,
+    price: `$ ${price}`,
+    converted_price: `R$ ${convert_price(price)}`
+  }
+}
+
 var find_and_fetch_price = (msg, match) => {
   const chatId = msg.chat.id;
   const cardName = match[1];
   const url = 'http://www.starcitygames.com/results?name='+encodeURI(cardName)+'&go.x=0&go.y=0';
 
   console.log(`${msg.chat.username} searched for: ${cardName}. URL: ${url}`);
+
   request(url)
     .then(function(html){
+      let message = "";
       let cards = [];
       let table_rows = $('.deckdbbody_row,.deckdbbody2_row', html);
 
@@ -62,36 +85,20 @@ var find_and_fetch_price = (msg, match) => {
         if (table_rows[i].children.filter(fetch_table_data('search_results_7')
           )[0].children[0].children[0].data == "NM/M") {
 
-          let td_name = table_rows[i].children.filter(fetch_table_data('search_results_1'))[0]; // Card name is in this column
-          let td_set = table_rows[i].children.filter(fetch_table_data('search_results_2'))[0]; // Card set is in this column
-          let td_price = table_rows[i].children.filter(fetch_table_data('search_results_9'))[0]; // Card price is in this column
-
-          // Each td has a tree of HTML until we get to the info that we think is important.
-          // That's why we go through a bunch of children
-          let scg_link = td_name.children[0].children[0].attribs["href"];
-          let name = td_name.children[0].children[0].children[0].data;
-          let set = td_set.children[1].children[0].data;
-          let price = get_price_from_table_data(td_price);
-
-          cards.push({
-            scg_link: scg_link,
-            name: name,
-            set: set,
-            price: `$ ${price}`,
-            converted_price: `R$ ${convert_price(price)}`
-          })
+          let card = get_card_from_table_row(table_rows[i]);
+          cards.push(card);
 
         }
       }
 
       if (cards.length > 0) {
-        let grouped_cards = cards.groupBy("name")
-        let message = assemble_message_from_grouped_cards(grouped_cards)
-
-        bot.sendMessage(chatId, message, {parse_mode : "markdown"});
+        let grouped_cards = cards.groupBy("name");
+        message = assemble_message_from_grouped_cards(grouped_cards);
       } else {
-        bot.sendMessage(chatId, `Não foram encontrados resultados para "${cardName}"`, {parse_mode : "markdown"});
+        message = `Não foram encontrados resultados para "${cardName}"`
       }
+
+      bot.sendMessage(chatId, message, {parse_mode : "markdown"});
 
     })
     .catch(function(err){
