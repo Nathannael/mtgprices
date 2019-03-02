@@ -78,7 +78,7 @@ var find_and_fetch_price = (msg, match) => {
   const cardName = match[1];
   const url = 'http://www.starcitygames.com/results?name='+encodeURI(cardName)+'&go.x=0&go.y=0';
 
-  console.log(`${msg.chat.first_name} searched for: ${cardName}. URL: ${url}`);
+  console.log(`User ${msg.chat.first_name} searched for: ${cardName}. URL: ${url}`);
 
   request(url)
     .then(function(html){
