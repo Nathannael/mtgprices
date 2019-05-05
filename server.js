@@ -16,7 +16,7 @@ Array.prototype.groupBy = function(prop) {
   }, {})
 }
 
-var sendErrorMessage = (msg) => {
+var sendErrorMessage = (chatId) => {
   bot.sendMessage(chatId, `Ocorreu um erro! Tente novamente mais tarde.`)
 }
 
@@ -128,43 +128,39 @@ var get_card_names_from_languages = (cards, languages = ['en', 'pt']) => {
 }
 
 var create_keyboard = (card_names) => {
-  return = {
+  return {
     "reply_markup": {
     "inline_keyboard": card_names
     }
   }
 }
 
-var find_cards_on_scryfall = (user_query) => {
-  query = scryfallUrl+`q=${encodeURI(user_query)}`
+var find_cards_on_scryfall = (msg) => {
+  query = scryfallUrl+`q=${encodeURI(msg.text)}`
   console.log("Query Executada pelo usuário:");
   console.log(query);
   request(query)
     .then(function(response){
       possible_cards = JSON.parse(response)["data"];
-      return get_card_names_from_languages(possible_cards);
+      card_names = get_card_names_from_languages(possible_cards);
+      if (card_names.length == 1) {
+        find_and_fetch_price(msg, card_names[0][0].callback_data)
+      } else {
+        let txt = "";
+        let options = "";
+        if (card_names.length > 1) {
+          options = create_keyboard(card_names);
+          txt = 'Foram encontradas algumas possibilidades. Por favor, escolha a carta correta: ';
+        } else {
+          txt = 'Não foram encontradas cartas com esse nome no banco de dados do Scryfall';
+        }
+        bot.sendMessage(msg.chat.id, txt, options);
+      }
     })
     .catch(function(err){
       console.log(err);
       sendErrorMessage(msg.chat.id)
     });
-}
-
-var handle_query = (msg) => {
-  card_names = find_cards_on_scryfall(user_query);
-  if (card_names.length == 1) {
-    find_and_fetch_price(msg, card_names[0][0].callback_data)
-  } else {
-    let txt = "";
-    let options = "";
-    if (card_names.length > 1) {
-      options = create_keyboard(card_names);
-      txt = 'Foram encontradas algumas possibilidades. Por favor, escolha a carta correta: ';
-    } else {
-      txt = 'Não foram encontradas cartas com esse nome no banco de dados do Scryfall';
-    }
-    bot.sendMessage(msg.chat.id, txt, opts);
-  }
 }
 
 bot.on('message', (msg) => {
