@@ -6,6 +6,7 @@
   "dependencies": {
     "cheerio": "^1.0.0-rc.2",
     "dotenv": "^6.2.0",
+    "mtgsdk": "^0.4.2",
     "node-telegram-bot-api": "^0.30.0",
     "request-promise": "^4.2.2"
   },

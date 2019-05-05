@@ -1,9 +1,11 @@
 const TelegramBot = require( `node-telegram-bot-api` );
 const request = require('request-promise');
 const $ = require('cheerio');
+const mtg = require('mtgsdk')
 require('dotenv').config();
 
 const bot = new TelegramBot( process.env.TOKEN, { polling: true } )
+const scryfallUrl = 'https://api.scryfall.com/cards/search?include_multilingual=true&'
 
 Array.prototype.groupBy = function(prop) {
   return this.reduce(function(groups, item) {
@@ -12,6 +14,10 @@ Array.prototype.groupBy = function(prop) {
     groups[val].push(item)
     return groups
   }, {})
+}
+
+var sendErrorMessage = (msg) => {
+  bot.sendMessage(chatId, `Ocorreu um erro! Tente novamente mais tarde.`)
 }
 
 var convert_price = (price, rate=2.5) => {
@@ -73,9 +79,8 @@ var get_card_from_table_row = (table_row) => {
   }
 }
 
-var find_and_fetch_price = (msg, match) => {
+var find_and_fetch_price = (msg, cardName) => {
   const chatId = msg.chat.id;
-  const cardName = match[1];
   const url = 'http://www.starcitygames.com/results?name='+encodeURI(cardName)+'&go.x=0&go.y=0';
 
   console.log(`User ${msg.chat.first_name} searched for: ${cardName}. URL: ${url}`);
@@ -104,14 +109,76 @@ var find_and_fetch_price = (msg, match) => {
     })
     .catch(function(err){
       console.log(err);
-      bot.sendMessage(chatId, `Ocorreu um erro! Tente novamente mais tarde.`)
+      sendErrorMessage(chatId);
     });
 }
 
-bot.onText(/\/card (.+)/, function(msg, match) {
-  find_and_fetch_price(msg, match)
+var filter_cards_from_languages = (cards, languages) => {
+  return cards.filter((card) => { return languages.includes(card.lang); });
+}
 
-});
-bot.onText(/\/start/, function(msg, match) {
-  bot.sendMessage(msg.chat.id, `Bem vindo! Utilize o comando */card <nome da carta>* para começar a verificar preços de cartas! A conversão segue a conversão x2,5.`, {parse_mode : "markdown"});
+var get_card_names_from_languages = (cards, languages = ['en', 'pt']) => {
+  filtered_cards = filter_cards_from_languages(cards, languages);
+  return filtered_cards.map((card) =>
+    {
+      text = card.printed_name || card.name
+      return [{"text": text, "callback_data": card.name }]
+    }
+  )
+}
+
+var create_keyboard = (card_names) => {
+  return = {
+    "reply_markup": {
+    "inline_keyboard": card_names
+    }
+  }
+}
+
+var find_cards_on_scryfall = (user_query) => {
+  query = scryfallUrl+`q=${encodeURI(user_query)}`
+  console.log("Query Executada pelo usuário:");
+  console.log(query);
+  request(query)
+    .then(function(response){
+      possible_cards = JSON.parse(response)["data"];
+      return get_card_names_from_languages(possible_cards);
+    })
+    .catch(function(err){
+      console.log(err);
+      sendErrorMessage(msg.chat.id)
+    });
+}
+
+var handle_query = (msg) => {
+  card_names = find_cards_on_scryfall(user_query);
+  if (card_names.length == 1) {
+    find_and_fetch_price(msg, card_names[0][0].callback_data)
+  } else {
+    let txt = "";
+    let options = "";
+    if (card_names.length > 1) {
+      options = create_keyboard(card_names);
+      txt = 'Foram encontradas algumas possibilidades. Por favor, escolha a carta correta: ';
+    } else {
+      txt = 'Não foram encontradas cartas com esse nome no banco de dados do Scryfall';
+    }
+    bot.sendMessage(msg.chat.id, txt, opts);
+  }
+}
+
+bot.on('message', (msg) => {
+  if(msg.text.match(/\/card (.+)/)) {
+    bot.sendMessage(msg.chat.id, "Agora você não precisa mais do comando */card <nome da carta>* para pesquisar! Ah, você também pode pesquisar em português :)", {parse_mode : "markdown"})
+  } else {
+    find_cards_on_scryfall(msg);
+  }
+})
+
+bot.on('callback_query', function onCallbackQuery(choice){
+  console.log(choice);
+  const chosen_card = choice.data // This is responsible for checking the content of callback_data
+  const msg = choice.message
+
+  find_and_fetch_price(msg, chosen_card)
 });
