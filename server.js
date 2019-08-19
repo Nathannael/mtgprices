@@ -1,11 +1,24 @@
-const TelegramBot = require( `node-telegram-bot-api` );
+const url = `https://${process.env.HEROKU_APP_NAME}.herokuapp.com:443`;
+const token = process.env.TOKEN;
+
+const TelegramBot = require( 'node-telegram-bot-api' );
 const request = require('request-promise');
 const $ = require('cheerio');
 const mtg = require('mtgsdk')
 require('dotenv').config();
 
-const bot = new TelegramBot( process.env.TOKEN, { polling: true } )
+const options = {
+  webHook: {
+    port: process.env.PORT
+  }
+};
+
 const scryfallUrl = 'https://api.scryfall.com/cards/search?include_multilingual=true&'
+
+const bot = new TelegramBot(token, options);
+bot.setWebHook(`${url}/bot${token}`);
+
+// const bot = new TelegramBot( , { polling: true } )
 
 Array.prototype.groupBy = function(prop) {
   return this.reduce(function(groups, item) {
