@@ -7,9 +7,9 @@ exports.findAndFetchPrice = (cardName) => {
   const url = 'http://www.starcitygames.com/results?name=' + encodeURI(cardName) + '&go.x=0&go.y=0'
   console.log(url)
 
-  return new Promise(function(resolve, reject) {
+  return new Promise((resolve, reject) => {
     request(url)
-      .then(function (html_page) {
+      .then((html_page) => {
         resolve(getCardsFromPage(html_page))
       })
       .catch((err) => {
@@ -53,18 +53,20 @@ let tableRowContainsCardWithMintCondition = (tableRow) =>
   )[0].children[0].children[0].data == "NM/M"
 
 let getCardFromTableRow = (tableRow) => {
-  let td_name = tableRow.children.filter(fetchTableData('search_results_1'))[0] // Card name is in this column
-  let td_set = tableRow.children.filter(fetchTableData('search_results_2'))[0] // Card set is in this column
-  let td_stock = tableRow.children.filter(fetchTableData('search_results_8'))[0] // Card stock is in this column
-  let td_price = tableRow.children.filter(fetchTableData('search_results_9'))[0] // Card price is in this column
+  let tdName = tableRow.children.filter(fetchTableData('search_results_1'))[0] // Card name is in this column
+  let tdSet = tableRow.children.filter(fetchTableData('search_results_2'))[0] // Card set is in this column
+  let tdStock = tableRow.children.filter(fetchTableData('search_results_8'))[0] // Card stock is in this column
+  let tdPrice = tableRow.children.filter(fetchTableData('search_results_9'))[0] // Card price is in this column
+  let tdCondition = tableRow.children.filter(fetchTableData('search_results_7'))[0] // Card price is in this column
 
   // Each td has a tree of HTML until we get to the info that we think is important.
   // That's why we go through a bunch of children
-  let scgLink = td_name.children[0].children[0].attribs["href"]
-  let name = td_name.children[0].children[0].children[0].data
-  let set = td_set.children[1].children[0].data
-  let price = getPriceFromTableData(td_price)
-  let stock = td_stock.children[0].data != 'Out of Stock'
+  let scgLink = tdName.children[0].children[0].attribs["href"]
+  let name = tdName.children[0].children[0].children[0].data
+  let set = tdSet.children[1].children[0].data
+  let price = getPriceFromTableData(tdPrice)
+  let condition = tdCondition.children[0].children[0].data
+  let stock = tdStock.children[0].data != 'Out of Stock'
 
   return {
     scgLink: scgLink,
