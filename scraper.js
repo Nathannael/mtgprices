@@ -27,7 +27,10 @@ let getCardsFromPage = (html) => {
 
   for (let i = 0; i < tableRows.length; i++) {
     if (tableRowContainsCardWithMintCondition(tableRows[i])) {
-      cards.push(getCardFromTableRow(tableRows[i]))
+      card = getCardFromTableRow(tableRows[i])
+      if (isNotSupply(card)) {
+        cards.push(card)
+      }
     }
   }
 
@@ -52,12 +55,15 @@ let tableRowContainsCardWithMintCondition = (tableRow) =>
     fetchTableData('search_results_7')
   )[0].children[0].children[0].data == "NM/M"
 
+let isNotSupply = (card) =>
+  !card['set'].startsWith('Supplies')
+
 let getCardFromTableRow = (tableRow) => {
   let tdName = tableRow.children.filter(fetchTableData('search_results_1'))[0] // Card name is in this column
   let tdSet = tableRow.children.filter(fetchTableData('search_results_2'))[0] // Card set is in this column
   let tdStock = tableRow.children.filter(fetchTableData('search_results_8'))[0] // Card stock is in this column
   let tdPrice = tableRow.children.filter(fetchTableData('search_results_9'))[0] // Card price is in this column
-  let tdCondition = tableRow.children.filter(fetchTableData('search_results_7'))[0] // Card price is in this column
+  let tdCondition = tableRow.children.filter(fetchTableData('search_results_7'))[0] // Card condition is in this column
 
   // Each td has a tree of HTML until we get to the info that we think is important.
   // That's why we go through a bunch of children
@@ -74,6 +80,7 @@ let getCardFromTableRow = (tableRow) => {
     set: set,
     price: `$ ${price}`,
     convertedPrice: `R$ ${utils.convertPrice(price)}`,
-    stock: stock
+    stock: stock,
+    condition: condition
   }
 }
