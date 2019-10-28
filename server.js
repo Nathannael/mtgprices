@@ -14,10 +14,10 @@ const options = {
   }
 }
 
-// const bot = new TelegramBot(token, options)
-// bot.setWebHook(`${url}/bot${token}`)
+const bot = new TelegramBot(token, options)
+bot.setWebHook(`${url}/bot${token}`)
 
-const bot = new TelegramBot(token, { polling: true } )
+// const bot = new TelegramBot(token, { polling: true } )
 
 let sendMessage = (chatId) => {
   return (message) => {
