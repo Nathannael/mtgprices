@@ -27,7 +27,7 @@ let sendMessage = (chatId) => {
 
 let sendErrorMessage = (chatId) =>
   // (err) => bot.sendMessage(chatId, `Ocorreu um erro! Tente novamente mais tarde.`)
-  (err) => bot.sendMessage(chatId, err)
+  (err) => bot.sendMessage(chatId, err.message)
 
 
 bot.on('message', (msg) => {

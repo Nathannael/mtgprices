@@ -22,6 +22,7 @@ exports.getResponseMessage = (cardNames) => {
         options = createKeyboard(cardNames)
         txt = 'Foram encontradas algumas possibilidades. Por favor, escolha a carta correta: '
       } else {
+          options = {}
         txt = 'Não foram encontradas cartas com esse nome no banco de dados do Scryfall'
       }
       resolve({ message: txt, options: options })
