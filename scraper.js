@@ -1,5 +1,4 @@
 const $ = require('cheerio')
-const mtg = require('mtgsdk')
 const request = require('request-promise')
 const utils = require('./utils.js')
 
@@ -27,7 +26,7 @@ let getCardsFromPage = (html) => {
 
   for (let i = 0; i < tableRows.length; i++) {
     if (tableRowContainsCardWithMintCondition(tableRows[i])) {
-      card = getCardFromTableRow(tableRows[i])
+      let card = getCardFromTableRow(tableRows[i])
       if (isNotSupply(card)) {
         cards.push(card)
       }
@@ -42,7 +41,7 @@ let getCardsFromPage = (html) => {
 //If it is, parse it. If it isn't, get the number, then parse it.
 let getPriceFromTableData = (tdContent) => {
   if (!tdContent.children[0].hasOwnProperty("data")) {
-    let tdContent = tdContent.children[2]
+    tdContent = tdContent.children[2]
   }
   return parseFloat(tdContent.children[0].data.substring(1)).toFixed(2)
 }

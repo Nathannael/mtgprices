@@ -1,5 +1,31 @@
 const scraper = require('./scraper.js')
 
+exports.getInlineOptions = (cards) => {
+
+  return new Promise((resolve, reject) => {
+    let response = cards.map(
+      (card) => {
+        console.log(card);
+        
+        return {
+          type: "article",
+          id: card[0].id,
+          title: card[0].text,
+          input_message_content: {
+            message_text: `*${card[0].text}*\n_Por favor, clique no botão para ver o preço_`,
+            parse_mode: 'Markdown'
+          },
+          reply_markup: {
+            "inline_keyboard": [[{text: 'Ver Preço', callback_data: card[0].callback_data}]]
+          },
+          parse_mode: 'Markdown'
+        }
+      }
+    )
+    resolve(response)
+  })
+}
+
 exports.getResponseMessage = (cardNames) => {
 
   let txt
@@ -7,7 +33,7 @@ exports.getResponseMessage = (cardNames) => {
     if (cardNames.length == 1) {
       scraper.findAndFetchPrice(cardNames[0][0].callback_data).then(
         (cards) => {
-          response = exports.craftMessageFromCards(cards)
+          let response = exports.craftMessageFromCards(cards)
           resolve(response)
         }
       )
@@ -18,11 +44,11 @@ exports.getResponseMessage = (cardNames) => {
         })
       })
     } else {
+      let options = {}
       if (cardNames.length > 1) {
         options = createKeyboard(cardNames)
         txt = 'Foram encontradas algumas possibilidades. Por favor, escolha a carta correta: '
       } else {
-          options = {}
         txt = 'Não foram encontradas cartas com esse nome no banco de dados do Scryfall'
       }
       resolve({ message: txt, options: options })
@@ -33,13 +59,17 @@ exports.getResponseMessage = (cardNames) => {
 exports.convertPrice = (price, rate = 2.5) => (parseFloat(price) * rate).toFixed(2)
 
 exports.craftMessageFromCards = (cards) => {
-  let options = { parse_mode: "markdown" }
+  let options = {
+    parse_mode: "markdown"
+  }
+
   let message
+
   if (cards.length > 0) {
     let groupedCards = cards.groupBy("name")
     message = assembleMessageFromGroupedCards(groupedCards)
   } else {
-    message = `Não foram encontrados resultados para "${cardName}"`
+    message = `Não foram encontrados resultados para essa pesquisa`
   }
   return { message: message, options: options }
 }
@@ -64,7 +94,7 @@ let assembleMessageFromGroupedCards = (groupedCards) => {
 
 let appendCardInfoOntoMessageString =
   (messageString, cardInfo) => {
-    stock = cardInfo["stock"] ? '' : '(sem estoque)'
+    let stock = cardInfo["stock"] ? '' : '(sem estoque)'
     return `${messageString}${cardInfo["set"]}: ${cardInfo["price"]} → * ${cardInfo["convertedPrice"]}* ${stock}\n`
   }
 
