@@ -30,7 +30,7 @@ exports.findCards = (query) => {
 
 let getCardNamesFromLanguages = (cards, languages = ['en', 'pt', 'es']) =>
   filterCardsFromLanguages(cards, languages).map(card =>
-    [{ "text": (card.printed_name || card.name), "callback_data": card.name }]
+    [{ "text": (card.printed_name || card.name), "callback_data": card.name, "id": card.id }]
   )
 
 let filterCardsFromLanguages = (cards, languages) =>
