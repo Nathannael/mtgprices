@@ -44,16 +44,16 @@ bot.on("inline_query", (msg) => {
     .then((options) => bot.answerInlineQuery(msg.id, options))
 });
 
-bot.on('chosen_inline_result', (chosen_result) => {
-  console.log(chosen_result)
+bot.on('chosen_inline_result', (chosenResult) => {
+  console.log(chosenResult)
 })
 
 bot.on('callback_query', function onCallbackQuery(choice){
-  const chosen_card = choice.data // returns which button the user clicked
+  const chosenCard = choice.data // returns which button the user clicked
   console.log(choice);
   
   if(choice.inline_message_id) {
-    scraper.findAndFetchPrice(chosen_card)
+    scraper.findAndFetchPrice(chosenCard)
       .then(utils.craftMessageFromCards)
       .then((message) =>  {
         bot.editMessageText(
@@ -65,7 +65,7 @@ bot.on('callback_query', function onCallbackQuery(choice){
   } else {
     const chatId = choice.message.chat.id
   
-    scraper.findAndFetchPrice(chosen_card)
+    scraper.findAndFetchPrice(chosenCard)
       .then(utils.craftMessageFromCards)
       .then(sendMessage(chatId))
       .catch(sendErrorMessage(chatId))
